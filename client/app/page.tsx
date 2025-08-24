@@ -7,7 +7,7 @@ import HeroSection from "@/components/HeroSection"
 import AboutSection from "@/components/AboutSection"
 
 export default function Home() {
-  const aboutRef = useRef<HTMLElement>(null)
+  const aboutRef = useRef<HTMLDivElement>(null)
 
   const scrollToAbout = () => {
     aboutRef.current?.scrollIntoView({

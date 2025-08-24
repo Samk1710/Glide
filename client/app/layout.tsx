@@ -13,7 +13,7 @@ const inter = Inter({
 });
 
 export const metadata: Metadata = {
-  title: "Ethereal Web3 - Your Gateway to the Digital Realm",
+  title: "Glide - Your Gateway to the Digital Realm",
   description:
     "Experience the future of decentralized applications with our magical Web3 platform",
   generator: "v0.app",

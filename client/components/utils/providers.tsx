@@ -1,23 +1,35 @@
-import { RainbowKitProvider } from '@rainbow-me/rainbowkit'
+'use client'
+
+import '@rainbow-me/rainbowkit/styles.css'
+import { RainbowKitProvider, darkTheme } from '@rainbow-me/rainbowkit'
 import { WagmiProvider } from 'wagmi'
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query"
+import { useState } from 'react'
 
 import {config} from '@/lib/wagmi-config'
 
 // const config = getDefaultConfig({
-//   appName: 'Elixir',
+//   appName: 'Glide',
 //   projectId: process.env.NEXT_PUBLIC_WALLETCONNECT_ID || '7fca28a51fc7faf46402c981989c35d0',
 //   chains: [mainnet, polygon, optimism, arbitrum, base],
 //   ssr: true,
 // })
 
-const queryClient = new QueryClient()
-
 export function Providers({ children }: { children: React.ReactNode }) {
+  const [queryClient] = useState(() => new QueryClient())
+
   return (
     <WagmiProvider config={config}>
       <QueryClientProvider client={queryClient}>
-        <RainbowKitProvider>
+        <RainbowKitProvider
+          theme={darkTheme({
+            accentColor: '#000000',
+            accentColorForeground: 'white',
+            borderRadius: 'medium',
+            fontStack: 'system',
+            overlayBlur: 'small',
+          })}
+        >
           {children}
         </RainbowKitProvider>
       </QueryClientProvider>

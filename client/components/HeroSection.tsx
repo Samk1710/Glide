@@ -1,6 +1,7 @@
 "use client";
 
 import { Button } from "@/components/ui/button";
+import { ConnectButton } from '@rainbow-me/rainbowkit';
 import LightRays from "./LightRays";
 
 interface HeroSectionProps {
@@ -17,15 +18,15 @@ export default function HeroSection({ onLearnMore }: HeroSectionProps) {
       <div className="absolute inset-0 z-10">
         <LightRays
           raysOrigin="top-center"
-          raysColor="#8B0000"
+          raysColor="#ff1a1a"
           raysSpeed={1.2}
-          lightSpread={0.6}
-          rayLength={3}
+          lightSpread={1.2}
+          rayLength={4}
           followMouse={true}
           mouseInfluence={0.08}
           noiseAmount={0.0}
           distortion={0.0}
-          className="opacity-40"
+          className="opacity-60"
         />
       </div>
 
@@ -38,12 +39,11 @@ export default function HeroSection({ onLearnMore }: HeroSectionProps) {
           </div>
         </div>
 
+
         <h1 className="text-5xl md:text-7xl font-bold text-white mb-6 font-inter leading-tight">
-          Automated Airdrop
+          Land yourself with
           <br />
-          <span className="bg-gradient-to-r from-red-600 to-red-600 bg-clip-text text-transparent">
-            Participation
-          </span>
+          <span className="bg-gradient-to-r from-red-600 to-red-400 bg-clip-text text-transparent">Glide</span>
         </h1>
 
         <p className="text-xl md:text-2xl text-white/70 mb-12 max-w-2xl mx-auto leading-relaxed">
@@ -52,17 +52,45 @@ export default function HeroSection({ onLearnMore }: HeroSectionProps) {
         </p>
 
         <div className="flex flex-col sm:flex-row gap-4 justify-center items-center">
-          <Button
-            size="lg"
-            className="bg-red-700 hover:bg-red-900 text-white px-8 py-4 text-lg font-semibold rounded-lg"
-          >
-            Connect Wallet
-          </Button>
+          <ConnectButton.Custom>
+            {({ account, chain, openAccountModal, openChainModal, openConnectModal, mounted }) => {
+              const connected = mounted && account && chain;
+              return (
+                <>
+                  {!connected ? (
+                    <Button
+                      size="lg"
+                      className="bg-red-700 hover:bg-red-900 text-white px-8 py-4 text-lg font-semibold rounded-lg cursor-pointer"
+                      onClick={openConnectModal}
+                    >
+                      Connect Wallet
+                    </Button>
+                  ) : chain.unsupported ? (
+                    <Button
+                      size="lg"
+                      className="bg-red-700 hover:bg-red-900 text-white px-8 py-4 text-lg font-semibold rounded-lg cursor-pointer"
+                      onClick={openChainModal}
+                    >
+                      Wrong Network
+                    </Button>
+                  ) : (
+                    <Button
+                      size="lg"
+                      className="bg-red-700 text-white px-8 py-4 text-lg font-semibold rounded-lg cursor-not-allowed opacity-60"
+                      disabled
+                    >
+                      Connected
+                    </Button>
+                  )}
+                </>
+              );
+            }}
+          </ConnectButton.Custom>
           <Button
             size="lg"
             variant="outline"
             onClick={onLearnMore}
-            className="border-white/20 text-white hover:bg-white/10 px-8 py-4 text-lg rounded-lg backdrop-blur-sm bg-transparent"
+            className="border-white/20 text-white hover:bg-white/10 px-8 py-4 text-lg rounded-lg backdrop-blur-sm bg-transparent cursor-pointer"
           >
             Learn More
           </Button>
