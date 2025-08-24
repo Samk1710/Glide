@@ -1,0 +1,10 @@
+{
+  "dependencies": {
+    "@rainbow-me/rainbowkit": "^2.2.8",
+    "viem": "^2.34.0",
+    "wagmi": "^2.16.5"
+  },
+  "devDependencies": {
+    "@types/react": "^19.1.11"
+  }
+}
