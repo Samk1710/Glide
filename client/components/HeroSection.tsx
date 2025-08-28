@@ -1,7 +1,11 @@
 "use client";
 
+import { useState } from 'react';
 import { Button } from "@/components/ui/button";
 import { ConnectButton } from '@rainbow-me/rainbowkit';
+import { useTelegram } from '@/hooks/useTelegram';
+import { useRouter } from 'next/navigation';
+import { TelegramAuthDialog } from '@/components/TelegramAuthDialog';
 import LightRays from "./LightRays";
 
 interface HeroSectionProps {
@@ -9,6 +13,20 @@ interface HeroSectionProps {
 }
 
 export default function HeroSection({ onLearnMore }: HeroSectionProps) {
+  const { isConnected: isTelegramConnected, user, refreshUser } = useTelegram();
+  const router = useRouter();
+  const [showAuthDialog, setShowAuthDialog] = useState(false);
+
+  const handleTelegramConnect = () => {
+    setShowAuthDialog(true);
+  };
+
+  const handleAuthSuccess = async () => {
+    await refreshUser();
+    // Redirect to dashboard after successful connection
+    router.push('/dashboard');
+  };
+
   return (
     <section
       id="home"
@@ -76,16 +94,36 @@ export default function HeroSection({ onLearnMore }: HeroSectionProps) {
                   ) : (
                     <Button
                       size="lg"
-                      className="bg-red-700 text-white px-8 py-4 text-lg font-semibold rounded-lg cursor-not-allowed opacity-60"
+                      className="bg-green-700 text-white px-8 py-4 text-lg font-semibold rounded-lg cursor-not-allowed opacity-60"
                       disabled
                     >
-                      Connected
+                      Wallet Connected
                     </Button>
                   )}
                 </>
               );
             }}
           </ConnectButton.Custom>
+          
+          {/* Telegram Connect Button */}
+          {!isTelegramConnected ? (
+            <Button
+              size="lg"
+              onClick={handleTelegramConnect}
+              className="bg-blue-600 hover:bg-blue-800 text-white px-8 py-4 text-lg font-semibold rounded-lg cursor-pointer"
+            >
+              Connect Telegram
+            </Button>
+          ) : (
+            <Button
+              size="lg"
+              onClick={() => router.push('/dashboard')}
+              className="bg-green-600 hover:bg-green-800 text-white px-8 py-4 text-lg font-semibold rounded-lg cursor-pointer"
+            >
+              Go to Dashboard
+            </Button>
+          )}
+          
           <Button
             size="lg"
             variant="outline"
@@ -96,6 +134,13 @@ export default function HeroSection({ onLearnMore }: HeroSectionProps) {
           </Button>
         </div>
       </div>
+
+      {/* Telegram Auth Dialog */}
+      <TelegramAuthDialog
+        open={showAuthDialog}
+        onOpenChange={setShowAuthDialog}
+        onSuccess={handleAuthSuccess}
+      />
     </section>
   );
 }
