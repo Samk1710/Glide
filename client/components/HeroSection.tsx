@@ -2,6 +2,7 @@
 
 import { Button } from "@/components/ui/button";
 import { ConnectButton } from '@rainbow-me/rainbowkit';
+import { signIn, signOut, useSession } from "next-auth/react";
 import LightRays from "./LightRays";
 
 interface HeroSectionProps {
@@ -9,6 +10,15 @@ interface HeroSectionProps {
 }
 
 export default function HeroSection({ onLearnMore }: HeroSectionProps) {
+  const { data: session, status } = useSession();
+
+  const handleTwitterLogin = () => {
+    signIn('twitter', { 
+      callbackUrl: '/',
+      redirect: true 
+    });
+  };
+
   return (
     <section
       id="home"
@@ -52,15 +62,45 @@ export default function HeroSection({ onLearnMore }: HeroSectionProps) {
         </p>
 
         <div className="flex flex-col sm:flex-row gap-4 justify-center items-center">
+          {/* Twitter Auth Button - Primary action */}
+          {!session ? (
+            <Button
+              size="lg"
+              className="bg-black hover:bg-gray-800 text-white px-8 py-4 text-lg font-semibold rounded-lg cursor-pointer flex items-center gap-2"
+              onClick={handleTwitterLogin}
+            >
+              <svg className="w-5 h-5" viewBox="0 0 24 24" fill="currentColor">
+                <path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z"/>
+              </svg>
+              Connect with X
+            </Button>
+          ) : (
+            <Button
+              size="lg"
+              className="bg-green-700 hover:bg-green-600 text-white px-8 py-4 text-lg font-semibold rounded-lg cursor-pointer flex items-center gap-2"
+              onClick={() => window.location.href = '#dashboard'}
+            >
+              <img
+                src={session.user?.image || ''}
+                alt="Profile"
+                className="w-5 h-5 rounded-full"
+              />
+              ✓ Connected as @{(session.user as any)?.username || session.user?.name}
+            </Button>
+          )}
+          
+          {/* Wallet Connect Button - Secondary */}
           <ConnectButton.Custom>
             {({ account, chain, openAccountModal, openChainModal, openConnectModal, mounted }) => {
               const connected = mounted && account && chain;
+              
               return (
                 <>
                   {!connected ? (
                     <Button
                       size="lg"
-                      className="bg-red-700 hover:bg-red-900 text-white px-8 py-4 text-lg font-semibold rounded-lg cursor-pointer"
+                      variant="outline"
+                      className="border-white/20 text-white hover:bg-white/10 px-8 py-4 text-lg rounded-lg backdrop-blur-sm bg-transparent cursor-pointer"
                       onClick={openConnectModal}
                     >
                       Connect Wallet
@@ -68,7 +108,8 @@ export default function HeroSection({ onLearnMore }: HeroSectionProps) {
                   ) : chain.unsupported ? (
                     <Button
                       size="lg"
-                      className="bg-red-700 hover:bg-red-900 text-white px-8 py-4 text-lg font-semibold rounded-lg cursor-pointer"
+                      variant="outline"
+                      className="border-red-500/50 text-red-300 hover:bg-red-500/10 px-8 py-4 text-lg rounded-lg backdrop-blur-sm bg-transparent cursor-pointer"
                       onClick={openChainModal}
                     >
                       Wrong Network
@@ -76,10 +117,11 @@ export default function HeroSection({ onLearnMore }: HeroSectionProps) {
                   ) : (
                     <Button
                       size="lg"
-                      className="bg-red-700 text-white px-8 py-4 text-lg font-semibold rounded-lg cursor-not-allowed opacity-60"
-                      disabled
+                      variant="outline"
+                      className="border-green-500/50 text-green-300 hover:bg-green-500/10 px-8 py-4 text-lg rounded-lg backdrop-blur-sm bg-transparent cursor-pointer"
+                      onClick={openAccountModal}
                     >
-                      Connected
+                      ✓ Wallet Connected
                     </Button>
                   )}
                 </>

@@ -1,5 +1,6 @@
 'use client'
 
+import { SessionProvider } from "next-auth/react";
 import '@rainbow-me/rainbowkit/styles.css'
 import { RainbowKitProvider, darkTheme } from '@rainbow-me/rainbowkit'
 import { WagmiProvider } from 'wagmi'
@@ -30,7 +31,9 @@ export function Providers({ children }: { children: React.ReactNode }) {
             overlayBlur: 'small',
           })}
         >
-          {children}
+          <SessionProvider>
+            {children}
+          </SessionProvider>
         </RainbowKitProvider>
       </QueryClientProvider>
     </WagmiProvider>
