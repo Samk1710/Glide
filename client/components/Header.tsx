@@ -3,6 +3,7 @@
 import { Button } from "@/components/ui/button"
 import { ConnectButton } from '@rainbow-me/rainbowkit';
 import { useSession, signOut } from "next-auth/react";
+import Link from "next/link";
 
 export default function Header() {
   const { data: session } = useSession();
@@ -27,6 +28,9 @@ export default function Header() {
             <a href="#about" className="text-white/80 hover:text-white transition-colors cursor-pointer">
               About
             </a>
+            <Link href="/onboarding" className="text-white/80 hover:text-white transition-colors cursor-pointer">
+              Setup Agent
+            </Link>
             
             {/* Twitter Profile Avatar */}
             {session?.user && (
