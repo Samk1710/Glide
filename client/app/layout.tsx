@@ -16,7 +16,6 @@ export const metadata: Metadata = {
   title: "Glide - Your Gateway to the Digital Realm",
   description:
     "Experience the future of decentralized applications with our magical Web3 platform",
-  generator: "v0.app",
 };
 
 export default function RootLayout({
