@@ -6,6 +6,7 @@ import { Label } from '@/components/ui/label';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { MessageSquare, Phone, Shield, Check, X, Plus, Trash2, AlertTriangle, Users, Hash } from 'lucide-react';
+import { toast } from 'sonner';
 
 interface TelegramStepProps {
   data: any;
@@ -35,7 +36,7 @@ export default function TelegramStep({ data, updateData, onNext }: TelegramStepP
 
   const handleSendOtp = async () => {
     if (!phoneNumber || phoneNumber.length < 10) {
-      alert('⚠️ Please enter a valid phone number with country code (e.g., +1234567890)');
+      toast.warning('Please enter a valid phone number with country code (e.g., +1234567890)');
       return;
     }
     
@@ -61,14 +62,14 @@ export default function TelegramStep({ data, updateData, onNext }: TelegramStepP
       if (result.success) {
         setIsOtpSent(true);
         setPhoneCodeHash(result.phoneCodeHash);
-        alert(`✅ Verification code sent!\n\nPlease check your Telegram account for the verification code and enter it below.`);
+        toast.success('Verification code sent! Please check your Telegram account for the verification code and enter it below.');
       } else {
-        alert(`❌ ${result.message}\n\nError Type: ${result.errorType || 'Unknown'}`);
+        toast.error(`${result.message} - Error Type: ${result.errorType || 'Unknown'}`);
         console.error('OTP send failed:', result);
       }
     } catch (error) {
       console.error('Error sending OTP:', error);
-      alert('❌ Failed to send OTP. Please check your internet connection and try again.');
+      toast.error('Failed to send OTP. Please check your internet connection and try again.');
     } finally {
       setIsConnecting(false);
     }
@@ -76,7 +77,7 @@ export default function TelegramStep({ data, updateData, onNext }: TelegramStepP
 
   const handleVerifyOtp = async () => {
     if (!otpCode || otpCode.length < 5 || otpCode.length > 6) {
-      alert('⚠️ Please enter the complete verification code (5-6 digits)');
+      toast.warning('Please enter the complete verification code (5-6 digits)');
       return;
     }
     
@@ -109,14 +110,14 @@ export default function TelegramStep({ data, updateData, onNext }: TelegramStepP
         // Immediately fetch available chats
         await fetchAvailableChats(result.session);
         
-        alert(`🎉 Phone number verified successfully!\n\nWelcome ${result.user?.firstName || 'User'}! You can now select chat rooms to monitor.`);
+        toast.success(`🎉 Phone number verified successfully! Welcome ${result.user?.firstName || 'User'}! You can now select chat rooms to monitor.`);
       } else {
-        alert(`❌ ${result.message}\n\nPlease check your code and try again.`);
+        toast.error(`${result.message} - Please check your code and try again.`);
         console.error('OTP verification failed:', result);
       }
     } catch (error) {
       console.error('Error verifying OTP:', error);
-      alert('❌ Failed to verify OTP. Please try again.');
+      toast.error('Failed to verify OTP. Please try again.');
     } finally {
       setIsConnecting(false);
     }
@@ -145,11 +146,11 @@ export default function TelegramStep({ data, updateData, onNext }: TelegramStepP
         console.log(`✅ Loaded ${result.chats.length} available chats`);
       } else {
         console.error('Failed to fetch chats:', result);
-        alert(`⚠️ Could not load chat rooms: ${result.message}`);
+        toast.error(`Could not load chat rooms: ${result.message}`);
       }
     } catch (error) {
       console.error('Error fetching chats:', error);
-      alert('⚠️ Failed to load chat rooms. You can still continue and add them manually.');
+      toast.warning('Failed to load chat rooms. You can still continue and add them manually.');
     }
   };
 
@@ -182,12 +183,12 @@ export default function TelegramStep({ data, updateData, onNext }: TelegramStepP
 
   const handleNext = () => {
     if (!isVerified) {
-      alert('Please verify your phone number first');
+      toast.warning('Please verify your phone number first');
       return;
     }
     
     if (selectedChatRooms.length === 0) {
-      alert('Please select at least one chat room to monitor');
+      toast.warning('Please select at least one chat room to monitor');
       return;
     }
 

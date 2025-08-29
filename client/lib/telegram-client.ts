@@ -12,9 +12,9 @@ interface TelegramAuthResult {
 
 interface ChatRoom {
   id: string;
-  title: string;
+  name: string;
   type: 'group' | 'channel' | 'private';
-  memberCount?: number;
+  members?: number;
 }
 
 interface TelegramMessage {
@@ -187,7 +187,7 @@ class TelegramClientService {
 
   // Get user's chat rooms
   async getChatRooms(): Promise<ChatRoom[]> {
-    console.log('💬 Fetching chat rooms...');
+    console.log('💬 Fetching real chat rooms from Telegram API...');
 
     // For development, return enhanced mock data with variety
     const mockRooms: ChatRoom[] = [
@@ -229,8 +229,61 @@ class TelegramClientService {
       },
     ];
 
-    console.log(`✅ Development mode: Returning ${mockRooms.length} mock chat rooms`);
-    return mockRooms;
+    // Use real Telegram API instead of mock data
+    try {
+      await this.initializeClient();
+
+      if (!this.client) {
+        throw new Error('Client not initialized');
+      }
+
+      // Fetch real dialogs from Telegram API
+      const result = await this.client.invoke(
+        new Api.messages.GetDialogs({
+          offsetDate: 0,
+          offsetId: 0,
+          offsetPeer: new Api.InputPeerEmpty(),
+          limit: 100,
+          hash: 0 as any,
+        })
+      );
+
+      const chatRooms: ChatRoom[] = [];
+      
+      if ('dialogs' in result && result.dialogs && result.chats) {
+        for (const chat of result.chats) {
+          if ('title' in chat && chat.title) {
+            // Determine chat type and member count
+            let type: 'group' | 'channel' = 'group';
+            let memberCount = 0;
+            
+            if ('broadcast' in chat && chat.broadcast) {
+              type = 'channel';
+            }
+            
+            if ('participantsCount' in chat && typeof chat.participantsCount === 'number') {
+              memberCount = chat.participantsCount;
+            }
+
+            chatRooms.push({
+              id: chat.id.toString(),
+              name: chat.title,
+              members: memberCount,
+              type: type,
+            });
+          }
+        }
+      }
+
+      console.log(`✅ Fetched ${chatRooms.length} real chat rooms from Telegram API`);
+      return chatRooms;
+    } catch (error: any) {
+      console.error('❌ Failed to fetch chat rooms from Telegram API:', error);
+      
+      // Return empty array instead of mock data
+      console.log('🔄 Returning empty chat room list due to API error');
+      return [];
+    }
   }
 
   // Start monitoring selected chat rooms
