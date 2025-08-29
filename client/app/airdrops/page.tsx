@@ -114,7 +114,7 @@ export default function AirdropsPage() {
   const [filterChain, setFilterChain] = useState<string>("All")
 
   // Mock data for right sidebar
-  const [walletBalance] = useState("$12,485.67")
+  const [walletBalance] = useState("$1,485.67")
   const [claimableAirdrops] = useState(3)
   const [recentProtocols] = useState([
     { name: "Uniswap V4", status: "Completed", reward: "$125" },
