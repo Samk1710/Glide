@@ -25,12 +25,19 @@
     "mongoose": "^8.18.0",
     "next": "^15.5.0",
     "next-auth": "^4.24.11",
+    "next-themes": "^0.4.6",
     "node-telegram-bot-api": "^0.66.0",
     "ogl": "^1.0.11",
     "react": "^19.1.0",
     "react-dom": "^19.1.0",
+<<<<<<< HEAD
     "react-tweet": "^3.2.2",
+=======
+    "sonner": "^2.0.7",
+>>>>>>> 5175f903cd538bdb25a3668ffeed511c13f43b81
     "tailwind-merge": "^3.3.1",
+    "telegraf": "^4.16.3",
+    "telegram": "^2.26.22",
     "viem": "^2.34.0",
     "wagmi": "^2.16.5",
     "zod": "^3.25.76"

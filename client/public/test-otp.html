@@ -1,0 +1,303 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>🔥 REAL TELEGRAM OTP TEST 🔥</title>
+    <style>
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            max-width: 600px;
+            margin: 0 auto;
+            padding: 20px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            min-height: 100vh;
+        }
+        .container {
+            background: rgba(255, 255, 255, 0.1);
+            padding: 30px;
+            border-radius: 15px;
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+        }
+        h1 {
+            text-align: center;
+            margin-bottom: 30px;
+            text-shadow: 0 2px 4px rgba(0,0,0,0.3);
+        }
+        .form-group {
+            margin-bottom: 20px;
+        }
+        label {
+            display: block;
+            margin-bottom: 5px;
+            font-weight: 500;
+        }
+        input[type="text"], input[type="tel"] {
+            width: 100%;
+            padding: 12px;
+            border: none;
+            border-radius: 8px;
+            background: rgba(255, 255, 255, 0.9);
+            color: #333;
+            font-size: 16px;
+        }
+        button {
+            width: 100%;
+            padding: 15px;
+            background: #4CAF50;
+            color: white;
+            border: none;
+            border-radius: 8px;
+            font-size: 16px;
+            font-weight: bold;
+            cursor: pointer;
+            margin: 10px 0;
+            transition: background 0.3s;
+        }
+        button:hover {
+            background: #45a049;
+        }
+        button:disabled {
+            background: #666;
+            cursor: not-allowed;
+        }
+        .result {
+            margin-top: 20px;
+            padding: 15px;
+            border-radius: 8px;
+            background: rgba(0, 0, 0, 0.2);
+            white-space: pre-wrap;
+            font-family: 'Courier New', monospace;
+            font-size: 14px;
+        }
+        .success {
+            background: rgba(76, 175, 80, 0.3);
+            border: 1px solid #4CAF50;
+        }
+        .error {
+            background: rgba(244, 67, 54, 0.3);
+            border: 1px solid #f44336;
+        }
+        .step {
+            display: none;
+        }
+        .step.active {
+            display: block;
+        }
+        .otp-display {
+            background: #ff4444;
+            color: white;
+            padding: 20px;
+            border-radius: 10px;
+            text-align: center;
+            font-size: 24px;
+            font-weight: bold;
+            margin: 20px 0;
+            border: 3px solid #fff;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🔥 REAL TELEGRAM OTP SYSTEM 🔥</h1>
+        
+        <!-- Step 1: Send OTP -->
+        <div id="step1" class="step active">
+            <div class="form-group">
+                <label for="phoneNumber">📱 Enter Your Phone Number (with country code):</label>
+                <input type="tel" id="phoneNumber" placeholder="+918583089117" value="+918583089117">
+            </div>
+            <button onclick="sendOtp()">🚀 SEND REAL OTP</button>
+            <div id="sendResult" class="result" style="display: none;"></div>
+        </div>
+
+        <!-- Step 2: Verify OTP -->
+        <div id="step2" class="step">
+            <div id="otpDisplay" class="otp-display" style="display: none;">
+                <div>🔥 YOUR OTP CODE IS:</div>
+                <div id="otpCode" style="font-size: 32px; margin: 10px 0;"></div>
+                <div>Enter this code below ⬇️</div>
+            </div>
+            
+            <div class="form-group">
+                <label for="otpInput">🔐 Enter OTP Code:</label>
+                <input type="text" id="otpInput" placeholder="123456" maxlength="6">
+            </div>
+            <button onclick="verifyOtp()">✅ VERIFY OTP</button>
+            <button onclick="goBack()">⬅️ Go Back</button>
+            <div id="verifyResult" class="result" style="display: none;"></div>
+        </div>
+
+        <!-- Step 3: Success -->
+        <div id="step3" class="step">
+            <h2>🎉 AUTHENTICATION SUCCESSFUL!</h2>
+            <p>✅ You are now authenticated with your Telegram account!</p>
+            <button onclick="testChatRooms()">💬 Load My Chat Rooms</button>
+            <button onclick="restart()">🔄 Test Again</button>
+            <div id="chatResult" class="result" style="display: none;"></div>
+        </div>
+    </div>
+
+    <script>
+        let phoneCodeHash = '';
+        let currentPhone = '';
+        
+        async function sendOtp() {
+            const phoneNumber = document.getElementById('phoneNumber').value;
+            const resultDiv = document.getElementById('sendResult');
+            
+            if (!phoneNumber) {
+                showResult('sendResult', 'Please enter a phone number', 'error');
+                return;
+            }
+            
+            currentPhone = phoneNumber;
+            showResult('sendResult', 'Sending OTP...', '');
+            
+            try {
+                const response = await fetch('/api/telegram', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({
+                        action: 'sendOtp',
+                        phoneNumber: phoneNumber
+                    })
+                });
+                
+                const data = await response.json();
+                
+                if (data.success) {
+                    phoneCodeHash = data.phoneCodeHash;
+                    showResult('sendResult', `✅ OTP SENT SUCCESSFULLY!\n\nPhone: ${phoneNumber}\nMessage: ${data.message}`, 'success');
+                    
+                    // Extract and display OTP from the message if it contains one
+                    if (data.message && data.message.includes('Your OTP is:')) {
+                        const otpMatch = data.message.match(/(\d{6})/);
+                        if (otpMatch) {
+                            document.getElementById('otpCode').textContent = otpMatch[1];
+                            document.getElementById('otpDisplay').style.display = 'block';
+                            document.getElementById('otpInput').value = otpMatch[1];
+                        }
+                    }
+                    
+                    setTimeout(() => {
+                        showStep('step2');
+                    }, 2000);
+                } else {
+                    showResult('sendResult', `❌ FAILED TO SEND OTP\nError: ${data.error}`, 'error');
+                }
+            } catch (error) {
+                showResult('sendResult', `❌ NETWORK ERROR\nError: ${error.message}`, 'error');
+            }
+        }
+        
+        async function verifyOtp() {
+            const otpCode = document.getElementById('otpInput').value;
+            const resultDiv = document.getElementById('verifyResult');
+            
+            if (!otpCode || otpCode.length !== 6) {
+                showResult('verifyResult', 'Please enter a valid 6-digit OTP code', 'error');
+                return;
+            }
+            
+            showResult('verifyResult', 'Verifying OTP...', '');
+            
+            try {
+                const response = await fetch('/api/telegram', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({
+                        action: 'verifyOtp',
+                        phoneNumber: currentPhone,
+                        code: otpCode,
+                        phoneCodeHash: phoneCodeHash
+                    })
+                });
+                
+                const data = await response.json();
+                
+                if (data.success) {
+                    showResult('verifyResult', `🎉 AUTHENTICATION SUCCESSFUL!\n\nUser: ${JSON.stringify(data.user, null, 2)}`, 'success');
+                    setTimeout(() => {
+                        showStep('step3');
+                    }, 2000);
+                } else {
+                    showResult('verifyResult', `❌ VERIFICATION FAILED\nError: ${data.error}`, 'error');
+                }
+            } catch (error) {
+                showResult('verifyResult', `❌ NETWORK ERROR\nError: ${error.message}`, 'error');
+            }
+        }
+        
+        async function testChatRooms() {
+            const resultDiv = document.getElementById('chatResult');
+            showResult('chatResult', 'Loading your chat rooms...', '');
+            
+            try {
+                const response = await fetch('/api/telegram', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({
+                        action: 'getChatRooms'
+                    })
+                });
+                
+                const data = await response.json();
+                
+                if (data.success) {
+                    let chatList = '🔥 YOUR TELEGRAM CHAT ROOMS:\n\n';
+                    data.chatRooms.forEach((chat, index) => {
+                        chatList += `${index + 1}. ${chat.title} (${chat.type})\n`;
+                        chatList += `   Members: ${chat.memberCount || 'Unknown'}\n\n`;
+                    });
+                    showResult('chatResult', chatList, 'success');
+                } else {
+                    showResult('chatResult', `❌ FAILED TO LOAD CHAT ROOMS\nError: ${data.error}`, 'error');
+                }
+            } catch (error) {
+                showResult('chatResult', `❌ NETWORK ERROR\nError: ${error.message}`, 'error');
+            }
+        }
+        
+        function showResult(elementId, message, type) {
+            const element = document.getElementById(elementId);
+            element.textContent = message;
+            element.className = `result ${type}`;
+            element.style.display = 'block';
+        }
+        
+        function showStep(stepId) {
+            document.querySelectorAll('.step').forEach(step => {
+                step.classList.remove('active');
+            });
+            document.getElementById(stepId).classList.add('active');
+        }
+        
+        function goBack() {
+            showStep('step1');
+        }
+        
+        function restart() {
+            phoneCodeHash = '';
+            currentPhone = '';
+            document.getElementById('phoneNumber').value = '+918583089117';
+            document.getElementById('otpInput').value = '';
+            document.getElementById('otpDisplay').style.display = 'none';
+            showStep('step1');
+            
+            // Hide all results
+            document.querySelectorAll('.result').forEach(result => {
+                result.style.display = 'none';
+            });
+        }
+    </script>
+</body>
+</html>
