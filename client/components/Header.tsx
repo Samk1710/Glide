@@ -28,6 +28,9 @@ export default function Header() {
             <Link href="/dashboard" className="text-white/80 hover:text-white transition-colors cursor-pointer">
               Dashboard
             </Link>
+            <Link href="/telegram" className="text-white/80 hover:text-white transition-colors cursor-pointer">
+              Telegram
+            </Link>
             <Link href="/onboarding" className="text-white/80 hover:text-white transition-colors cursor-pointer">
               Setup Agent
             </Link>

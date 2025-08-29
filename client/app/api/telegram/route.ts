@@ -59,10 +59,14 @@ export async function POST(request: NextRequest) {
         
         if (verifyResult.success) {
           console.log('✅ OTP verification successful for', phoneNumber);
+          
+          // Generate a more persistent session token
+          const sessionToken = `session_${phoneNumber.replace(/[^\d]/g, '')}_${Date.now()}`;
+          
           return NextResponse.json({
             success: true,
             user: verifyResult.user,
-            session: 'authenticated_session_' + phoneNumber.replace(/[^\d]/g, ''),
+            session: sessionToken,
             message: 'Authentication successful',
           });
         } else {
@@ -81,8 +85,16 @@ export async function POST(request: NextRequest) {
         console.log(`✅ Retrieved ${chatRooms.length} chat rooms`);
         return NextResponse.json({
           success: true,
-          chats: chatRooms,
-          chatRooms: chatRooms, // Keep both for compatibility
+          chats: chatRooms.map(room => ({
+            id: room.id,
+            name: room.title, // Map title to name for compatibility
+            title: room.title,
+            type: room.type,
+            members: room.memberCount || 0,
+            memberCount: room.memberCount || 0,
+          })),
+          chatRooms: chatRooms, // Keep original format too
+          isRealMode: true, // Now it's always real mode
         });
 
       case 'startMonitoring':
@@ -130,6 +142,24 @@ export async function POST(request: NextRequest) {
           success: true,
           messages: messages,
         });
+
+      case 'validateSession':
+        // Simple session validation - in production, you'd want more robust validation
+        const { session } = await request.json();
+        
+        if (session && session.startsWith('session_')) {
+          return NextResponse.json({
+            success: true,
+            valid: true,
+            message: 'Session is valid',
+          });
+        } else {
+          return NextResponse.json({
+            success: false,
+            valid: false,
+            message: 'Invalid session',
+          });
+        }
 
       default:
         return NextResponse.json(

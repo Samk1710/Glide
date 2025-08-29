@@ -1,12 +1,14 @@
 "use client";
 
 import React, { useState, useEffect } from 'react';
+import { useRouter } from 'next/navigation';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { MessageSquare, Phone, Shield, Check, X, Plus, Trash2, AlertTriangle, Users, Hash } from 'lucide-react';
 import { toast } from 'sonner';
+import { useTelegramAuth } from '@/contexts/TelegramAuthContext';
 
 interface TelegramStepProps {
   data: any;
@@ -15,17 +17,32 @@ interface TelegramStepProps {
 }
 
 export default function TelegramStep({ data, updateData, onNext }: TelegramStepProps) {
+  const router = useRouter();
+  const { user, session, isAuthenticated, login } = useTelegramAuth();
   const [phoneNumber, setPhoneNumber] = useState(data.telegram?.phoneNumber || '');
   const [otpCode, setOtpCode] = useState('');
   const [isOtpSent, setIsOtpSent] = useState(false);
-  const [isVerified, setIsVerified] = useState(data.telegram?.isVerified || false);
+  const [isVerified, setIsVerified] = useState(data.telegram?.isVerified || isAuthenticated);
   const [selectedChatRooms, setSelectedChatRooms] = useState(data.telegram?.selectedChatRooms || []);
   const [newChatRoom, setNewChatRoom] = useState('');
   const [isConnecting, setIsConnecting] = useState(false);
-  const [userSession, setUserSession] = useState(data.telegram?.session || '');
+  const [userSession, setUserSession] = useState(data.telegram?.session || session);
   const [availableChatRooms, setAvailableChatRooms] = useState([]);
   const [phoneCodeHash, setPhoneCodeHash] = useState('');
-  const [userInfo, setUserInfo] = useState<any>(null);
+  const [userInfo, setUserInfo] = useState<any>(data.telegram?.userInfo || user);
+
+  // Auto-redirect if already authenticated
+  useEffect(() => {
+    if (isAuthenticated && user) {
+      setIsVerified(true);
+      setUserInfo(user);
+      setUserSession(session);
+      
+      // If we're already authenticated, show option to go to Telegram dashboard
+      toast.success(`Already logged in as ${user.first_name}! You can continue or visit the Telegram dashboard.`);
+      fetchAvailableChats(session);
+    }
+  }, [isAuthenticated, user, session]);
 
   // Auto-fetch chats if already verified
   useEffect(() => {
@@ -106,6 +123,9 @@ export default function TelegramStep({ data, updateData, onNext }: TelegramStepP
         setIsVerified(true);
         setUserSession(result.session);
         setUserInfo(result.user);
+        
+        // Use global auth context to save session
+        login(result.user, result.session);
         
         // Immediately fetch available chats
         await fetchAvailableChats(result.session);
@@ -309,10 +329,21 @@ export default function TelegramStep({ data, updateData, onNext }: TelegramStepP
                     <h4 className="text-green-300 font-medium">Phone Verified Successfully!</h4>
                     <p className="text-green-200/80 text-sm">
                       {userInfo?.firstName && `Welcome, ${userInfo.firstName}! `}
-                      Your account: {phoneNumber}
+                      Your account: {phoneNumber || userInfo?.phone}
                     </p>
                   </div>
                 </div>
+                {isAuthenticated && (
+                  <div className="mt-3">
+                    <Button
+                      onClick={() => router.push('/telegram')}
+                      variant="outline"
+                      className="bg-blue-500/20 border-blue-500/40 text-blue-300 hover:bg-blue-500/30"
+                    >
+                      Go to Telegram Dashboard
+                    </Button>
+                  </div>
+                )}
               </div>
             </>
           )}

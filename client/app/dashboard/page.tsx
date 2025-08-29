@@ -1,6 +1,7 @@
 "use client";
 
 import React from 'react';
+import Link from 'next/link';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import Background from '@/components/Background';
@@ -252,9 +253,11 @@ export default function DashboardPage() {
                 </CardTitle>
               </CardHeader>
               <CardContent className="space-y-3">
-                <Button className="w-full bg-purple-600 hover:bg-purple-700 text-white">
-                  View Analytics
-                </Button>
+                <Link href="/telegram" className="w-full">
+                  <Button className="w-full bg-purple-600 hover:bg-purple-700 text-white">
+                    View Telegram Dashboard
+                  </Button>
+                </Link>
                 <Button variant="outline" className="w-full bg-white/5 border-white/20 text-white hover:bg-white/10">
                   Export Reports
                 </Button>

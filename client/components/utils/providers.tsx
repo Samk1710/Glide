@@ -6,6 +6,7 @@ import { RainbowKitProvider, darkTheme } from '@rainbow-me/rainbowkit'
 import { WagmiProvider } from 'wagmi'
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query"
 import { useState } from 'react'
+import { TelegramAuthProvider } from '@/contexts/TelegramAuthContext'
 
 import {config} from '@/lib/wagmi-config'
 
@@ -32,7 +33,9 @@ export function Providers({ children }: { children: React.ReactNode }) {
           })}
         >
           <SessionProvider>
-            {children}
+            <TelegramAuthProvider>
+              {children}
+            </TelegramAuthProvider>
           </SessionProvider>
         </RainbowKitProvider>
       </QueryClientProvider>
