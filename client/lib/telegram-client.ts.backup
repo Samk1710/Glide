@@ -1,0 +1,304 @@
+interface TelegramAuthResult {
+  success: boolean;
+  user?: any;
+  error?: string;
+  phoneCodeHash?: string;
+  requiresCode?: boolean;
+}
+
+interface TelegramMessage {
+  id: number;
+  message: string;
+  fromId?: number;
+  date: number;
+  chatId: number;
+  chatTitle?: string;
+  fromName?: string;
+}
+
+interface TelegramChat {
+  id: number;
+  title: string;
+  type: 'group' | 'supergroup' | 'channel';
+  membersCount?: number;
+}
+
+class TelegramClientService {
+  private apiId: number;
+  private apiHash: string;
+  private sessionString: string = '';
+  private accessHash: string = '';
+  private phoneCodeHash: string = '';
+
+  constructor() {
+    this.apiId = parseInt(process.env.NEXT_PUBLIC_TELEGRAM_API_ID || '0');
+    this.apiHash = process.env.NEXT_PUBLIC_TELEGRAM_API_HASH || '';
+    
+    if (!this.apiId || !this.apiHash) {
+      console.error('Telegram API credentials not configured');
+    }
+  }
+
+  private async makeApiCall(method: string, params: any = {}): Promise<any> {
+    const url = `https://api.telegram.org/bot${process.env.TELEGRAM_BOT_TOKEN}/${method}`;
+    
+    try {
+      const response = await fetch(url, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(params),
+      });
+
+      const data = await response.json();
+      
+      if (!data.ok) {
+        throw new Error(data.description || 'Telegram API error');
+      }
+
+      return data.result;
+    } catch (error) {
+      console.error(`Telegram API call failed for ${method}:`, error);
+      throw error;
+    }
+  }
+
+  // For user authentication via phone/OTP
+  async sendCode(phoneNumber: string): Promise<TelegramAuthResult> {
+    try {
+      // Generate a 6-digit OTP
+      const code = Math.floor(100000 + Math.random() * 900000).toString();
+      this.phoneCodeHash = Buffer.from(`${phoneNumber}:${code}:${Date.now()}`).toString('base64');
+
+      // Store the OTP temporarily (in production, use Redis or database)
+      const otpStore = new Map();
+      otpStore.set(phoneNumber, {
+        code,
+        hash: this.phoneCodeHash,
+        expiry: Date.now() + 5 * 60 * 1000 // 5 minutes
+      });
+
+      // Send OTP via Telegram Bot API if user has started the bot
+      if (process.env.TELEGRAM_BOT_TOKEN) {
+        try {
+          const userChats = await this.makeApiCall('getUpdates');
+          const userChat = userChats.find((update: any) => 
+            update.message && update.message.contact?.phone_number === phoneNumber
+          );
+
+          if (userChat) {
+            await this.makeApiCall('sendMessage', {
+              chat_id: userChat.message.chat.id,
+              text: `🔐 Your Glide verification code is: ${code}\n\nThis code expires in 5 minutes.`,
+              parse_mode: 'Markdown'
+            });
+          }
+        } catch (botError) {
+          console.log('Bot API not available, using manual OTP entry');
+        }
+      }
+
+      return {
+        success: true,
+        phoneCodeHash: this.phoneCodeHash,
+        requiresCode: true
+      };
+    } catch (error: any) {
+      return {
+        success: false,
+        error: error.message || 'Failed to send verification code'
+      };
+    }
+  }
+
+  async signIn(phoneNumber: string, code: string, phoneCodeHash: string): Promise<TelegramAuthResult> {
+    try {
+      // Verify the OTP code
+      const decoded = Buffer.from(phoneCodeHash, 'base64').toString();
+      const [storedPhone, storedCode, timestamp] = decoded.split(':');
+      
+      if (storedPhone !== phoneNumber) {
+        return {
+          success: false,
+          error: 'Phone number mismatch'
+        };
+      }
+
+      if (Date.now() - parseInt(timestamp) > 5 * 60 * 1000) {
+        return {
+          success: false,
+          error: 'Verification code expired'
+        };
+      }
+
+      if (storedCode !== code) {
+        return {
+          success: false,
+          error: 'Invalid verification code'
+        };
+      }
+
+      // Generate a session for the user
+      this.sessionString = Buffer.from(`${phoneNumber}:${Date.now()}`).toString('base64');
+
+      return {
+        success: true,
+        user: {
+          phone: phoneNumber,
+          session: this.sessionString,
+          authenticated: true
+        }
+      };
+    } catch (error: any) {
+      return {
+        success: false,
+        error: error.message || 'Failed to verify code'
+      };
+    }
+  }
+
+  async getDialogs(session?: string): Promise<TelegramChat[]> {
+    try {
+      // Mock data - in real implementation, this would connect to Telegram's API
+      // For now, return sample chats that user might want to monitor
+      return [
+        {
+          id: 1,
+          title: 'Crypto Signals Pro',
+          type: 'channel',
+          membersCount: 25420
+        },
+        {
+          id: 2,
+          title: 'DeFi Alpha Group',
+          type: 'supergroup',
+          membersCount: 12890
+        },
+        {
+          id: 3,
+          title: 'NFT Trading Hub',
+          type: 'group',
+          membersCount: 8950
+        },
+        {
+          id: 4,
+          title: 'Web3 Developers',
+          type: 'group',
+          membersCount: 5670
+        },
+        {
+          id: 5,
+          title: 'Solana Ecosystem',
+          type: 'channel',
+          membersCount: 18340
+        }
+      ];
+    } catch (error) {
+      console.error('Error getting dialogs:', error);
+      return [];
+    }
+  }
+
+  async getMessages(chatId: number, limit: number = 50, session?: string): Promise<TelegramMessage[]> {
+    try {
+      // Mock messages - in real implementation, this would fetch actual Telegram messages
+      const mockMessages: TelegramMessage[] = [
+        {
+          id: 1,
+          message: '🚀 BTC breaking resistance at $45k! Target: $50k',
+          fromId: 12345,
+          fromName: 'CryptoAnalyst',
+          date: Date.now() - 3600000,
+          chatId: chatId,
+          chatTitle: 'Crypto Signals Pro'
+        },
+        {
+          id: 2,
+          message: 'New DeFi protocol launching tomorrow - early access for holders',
+          fromId: 67890,
+          fromName: 'DeFiGuru',
+          date: Date.now() - 7200000,
+          chatId: chatId,
+          chatTitle: 'DeFi Alpha Group'
+        },
+        {
+          id: 3,
+          message: 'NFT floor prices pumping across major collections 📈',
+          fromId: 11111,
+          fromName: 'NFTTrader',
+          date: Date.now() - 10800000,
+          chatId: chatId,
+          chatTitle: 'NFT Trading Hub'
+        }
+      ];
+
+      return mockMessages.slice(0, limit);
+    } catch (error) {
+      console.error('Error getting messages:', error);
+      return [];
+    }
+  }
+
+  async searchMessages(query: string, chatId?: number, session?: string): Promise<TelegramMessage[]> {
+    try {
+      // Mock search - in real implementation, this would search actual messages
+      const allMessages = await this.getMessages(chatId || 0, 100, session);
+      
+      return allMessages.filter(msg => 
+        msg.message.toLowerCase().includes(query.toLowerCase())
+      );
+    } catch (error) {
+      console.error('Error searching messages:', error);
+      return [];
+    }
+  }
+
+  async getMe(session?: string): Promise<any> {
+    try {
+      if (!session || !this.sessionString) {
+        return null;
+      }
+
+      const decoded = Buffer.from(session, 'base64').toString();
+      const [phone] = decoded.split(':');
+
+      return {
+        phone: phone,
+        id: Math.floor(Math.random() * 1000000),
+        first_name: 'User',
+        username: `user_${phone.slice(-4)}`,
+        is_premium: false
+      };
+    } catch (error) {
+      console.error('Error getting user info:', error);
+      return null;
+    }
+  }
+
+  // Real-time message monitoring (webhook approach)
+  async startMessageMonitoring(chatIds: number[], callback: (message: TelegramMessage) => void) {
+    // This would set up webhooks or long polling in a real implementation
+    console.log('Starting message monitoring for chats:', chatIds);
+    
+    // Mock real-time messages every 30 seconds
+    setInterval(async () => {
+      for (const chatId of chatIds) {
+        const mockMessage: TelegramMessage = {
+          id: Math.floor(Math.random() * 1000000),
+          message: `New message in chat ${chatId}: Market update at ${new Date().toLocaleTimeString()}`,
+          fromId: Math.floor(Math.random() * 100000),
+          fromName: 'LiveTrader',
+          date: Date.now(),
+          chatId: chatId,
+          chatTitle: `Chat ${chatId}`
+        };
+        
+        callback(mockMessage);
+      }
+    }, 30000); // Every 30 seconds
+  }
+}
+
+export const telegramClient = new TelegramClientService();
+export type { TelegramMessage, TelegramAuthResult, TelegramChat };
