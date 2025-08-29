@@ -1,6 +1,7 @@
 "use client";
 
 import React from 'react';
+import { useRouter } from 'next/navigation';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { CheckCircle, Wallet, MessageSquare, Shield, ArrowRight, Star } from 'lucide-react';
@@ -12,10 +13,12 @@ interface CompletionStepProps {
 }
 
 export default function CompletionStep({ data, updateData, onNext }: CompletionStepProps) {
+  const router = useRouter();
+
   const handleGetStarted = () => {
-    // Navigate to dashboard or main app
+    // Navigate to dashboard
     console.log('Navigating to dashboard with data:', data);
-    // You can implement navigation logic here
+    router.push('/dashboard');
   };
 
   const getSetupSummary = () => {
