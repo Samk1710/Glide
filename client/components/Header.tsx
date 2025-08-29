@@ -28,6 +28,9 @@ export default function Header() {
             <a href="#about" className="text-white/80 hover:text-white transition-colors cursor-pointer">
               About
             </a>
+            <Link href="/airdrops" className="text-white/80 hover:text-white transition-colors cursor-pointer">
+              Airdrops
+            </Link>
             <Link href="/onboarding" className="text-white/80 hover:text-white transition-colors cursor-pointer">
               Setup Agent
             </Link>

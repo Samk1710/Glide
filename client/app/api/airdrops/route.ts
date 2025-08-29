@@ -4,240 +4,194 @@ import AirdropModel from '@/lib/models/Airdrop';
 
 export const dynamic = 'force-dynamic';
 
-export async function GET(_req: NextRequest) {
+export async function GET() {
   try {
-    await dbConnect();
+    // Generate 47-60 new random airdrops each time
+    const count = Math.floor(Math.random() * 14) + 47; // Random between 47-60
+    const airdrops = await generateRandomAirdrops(count)
     
-    // Check if we have any airdrops in the database
-    const count = await AirdropModel.countDocuments();
-    
-    // If no airdrops exist, generate some fake ones
-    if (count === 0) {
-      console.log('No airdrops found, generating fake data...');
-      await generateFakeAirdrops();
-    }
-    
-    // Fetch the first 10 airdrops
-    const items = await AirdropModel.find({}).sort({ createdAt: -1 }).limit(10).lean();
-    return NextResponse.json({ ok: true, data: items, count: items.length });
-  } catch (error: any) {
-    console.error('Error in airdrops GET:', error);
-    return NextResponse.json({ ok: false, error: error.message }, { status: 500 });
+    return NextResponse.json({
+      success: true,
+      airdrops,
+      count: airdrops.length
+    })
+  } catch (error) {
+    console.error('Error generating airdrops:', error)
+    return NextResponse.json(
+      { error: 'Failed to generate airdrops' },
+      { status: 500 }
+    )
   }
 }
 
-// Function to generate fake airdrops without external API
-async function generateFakeAirdrops() {
-  const fakeAirdrops = [
-    {
-      slug: "zksync-era-airdrop",
-      name: "zkSync Era",
-      category: "Layer 2",
-      primary_chain: "Ethereum",
-      chains: ["Ethereum", "zkSync Era"],
-      timeline: {
-        rumor_window_start: "2024-01-15T00:00:00Z",
-        rumor_window_end: "2024-06-30T23:59:59Z",
-        snapshot_hint: "Multiple snapshots throughout 2024",
-        expected_claim_window: {
-          start: "2024-07-01T00:00:00Z",
-          end: "2024-12-31T23:59:59Z"
-        }
-      },
-      links: {
-        website: "https://zksync.io",
-        docs: "https://docs.zksync.io",
-        app: "https://portal.zksync.io"
-      },
-      sources: {
-        twitter_threads: [
-          {
-            handle: "@zksync",
-            url: "https://twitter.com/zksync/status/1750123456789",
-            tweet_id: "1750123456789",
-            posted_at: "2024-01-15T10:30:00Z"
-          }
-        ],
-        evidence_level: "strong"
-      },
-      requirements: {
-        onchain: {
-          chains: ["Ethereum", "zkSync Era"],
-          min_transactions: 5,
-          required_tx_types: ["bridge", "swap", "mint"],
-          bridge_activity: {
-            required: true,
-            min_value_usd: 100,
-            from_chains: ["Ethereum"],
-            to_chains: ["zkSync Era"]
-          },
-          swap_volume_usd_min: 500,
-          nft_holdings: [],
-          staking: []
-        },
-        offchain: {
-          twitter_follow: ["@zksync"],
-          discord_join: ["zkSync Discord"],
-          quests: [
-            {
-              title: "Complete zkSync Bridge Tutorial",
-              platform: "zkSync Portal",
-              url: "https://portal.zksync.io/tutorial",
-              points: 100
-            }
-          ],
-          kyc_required: false
-        }
-      },
-      sybil_resistance: {
-        heuristics: ["Unique wallet addresses", "Transaction history depth", "Bridge value thresholds"],
-        disqualifiers: ["Identified Sybil clusters", "Automated transaction patterns"]
-      },
-      allocation: {
-        token_ticker: "ZK",
-        total_pool_tokens: 1000000000,
-        vesting: {
-          cliff_days: 0,
-          vesting_months: 12
-        },
-        formula: "Points-based allocation with bridge volume multiplier",
-        weights: {
-          onchain_activity: 0.7,
-          social: 0.1,
-          loyalty_time: 0.15,
-          bonus_nft: 0.05
-        }
-      },
-      estimates: {
-        expected_value_usd_range: [500, 2000],
-        probability: "high",
-        notes: "Strong fundamentals and active development"
-      },
-      gas_breakdown: [
-        {
-          chain: "Ethereum",
-          action: "Bridge to zkSync",
-          est_gas_native: 0.015,
-          est_gas_usd: 45
-        },
-        {
-          chain: "zkSync Era", 
-          action: "Swap tokens",
-          est_gas_native: 0.001,
-          est_gas_usd: 2
-        }
-      ],
-      ai_synthesized_demo: true
-    },
-    {
-      slug: "starknet-mainnet-airdrop",
-      name: "StarkNet",
-      category: "Layer 2",
-      primary_chain: "Ethereum",
-      chains: ["Ethereum", "StarkNet"],
-      timeline: {
-        rumor_window_start: "2024-02-01T00:00:00Z",
-        snapshot_hint: "February 2024 snapshot",
-        expected_claim_window: {
-          start: "2024-08-01T00:00:00Z"
-        }
-      },
-      links: {
-        website: "https://starknet.io",
-        docs: "https://docs.starknet.io"
-      },
-      sources: {
-        twitter_threads: [
-          {
-            handle: "@StarkWareLtd",
-            url: "https://twitter.com/StarkWareLtd/status/1751234567890",
-            tweet_id: "1751234567890", 
-            posted_at: "2024-02-01T14:20:00Z"
-          }
-        ],
-        evidence_level: "rumor"
-      },
-      requirements: {
-        onchain: {
-          chains: ["StarkNet"],
-          min_transactions: 10,
-          required_tx_types: ["transfer", "contract_call"],
-          nft_holdings: [],
-          staking: []
-        },
-        offchain: {
-          twitter_follow: ["@StarkWareLtd"],
-          quests: [],
-          kyc_required: false
-        }
-      },
-      sybil_resistance: {
-        heuristics: ["Transaction diversity", "Smart contract interactions"],
-        disqualifiers: ["Bot-like behavior patterns"]
-      },
-      allocation: {
-        token_ticker: "STRK",
-        total_pool_tokens: 500000000,
-        vesting: {
-          cliff_days: 30,
-          vesting_months: 6
-        },
-        formula: "Activity-based distribution",
-        weights: {
-          onchain_activity: 0.8,
-          social: 0.1,
-          loyalty_time: 0.1
-        }
-      },
-      estimates: {
-        expected_value_usd_range: [200, 800],
-        probability: "medium"
-      },
-      gas_breakdown: [
-        {
-          chain: "StarkNet",
-          action: "Contract interaction",
-          est_gas_native: 0.002,
-          est_gas_usd: 5
-        }
-      ],
-      ai_synthesized_demo: true
-    }
+// Function to generate random airdrops for dashboard feed
+async function generateRandomAirdrops(count: number = 7) {
+  const chains = [
+    "Ethereum", "Polygon", "Arbitrum", "Optimism", "Base", "Blast", 
+    "zkSync Era", "StarkNet", "Scroll", "Linea", "Mantle", "Avalanche",
+    "Sui", "Aptos", "Celestia", "Manta", "Mode", "Taiko", "Zora",
+    "Immutable X", "Loopring", "Metis", "Boba", "Moonbeam", "Canto"
+  ];
+  
+  const categories = [
+    "Layer 2", "DeFi", "NFT", "Gaming", "Infrastructure", "AI", 
+    "RWA", "Social", "Privacy", "Cross-Chain", "Oracle", "Storage",
+    "Identity", "Governance", "Yield Farming", "Perpetuals", "Options",
+    "Insurance", "DAO Tools", "Analytics", "MEV", "ZK", "Modular"
+  ];
+  
+  const projectNames = [
+    "zkSync Era", "Arbitrum Nitro", "Optimism Superchain", "Base Onchain", 
+    "Blast Points", "Scroll Sessions", "Linea Voyage", "Mantle Journey",
+    "Polygon zkEVM", "StarkNet Alpha", "Avalanche Rush", "Celestia Modular",
+    "Sui Foundation", "Aptos Labs", "Manta Pacific", "Mode Network",
+    "Taiko Alpha", "Zora Create", "Immutable Games", "Loopring L2",
+    "LayerZero Bridge", "Wormhole Connect", "Hyperlane Interchain", "Axelar Network",
+    "Eigenlayer AVS", "Babylon Bitcoin", "Pendle Yield", "GMX Trading",
+    "dYdX Perpetuals", "Jupiter Exchange", "Drift Protocol", "Marginfi Lend",
+    "Solend Finance", "Raydium AMM", "Orca DEX", "Tensor NFT",
+    "Magic Eden", "OpenSea Pro", "LooksRare V2", "Blur Marketplace",
+    "Friend.tech Social", "Lens Protocol", "Farcaster Frames", "Paragraph Publishing",
+    "Mirror Writing", "Snapshot Voting", "Tally Governance", "Commonwealth Gov",
+    "Compound Finance", "Aave Protocol", "MakerDAO", "Curve Finance",
+    "Uniswap V4", "SushiSwap", "PancakeSwap", "TraderJoe",
+    "Synthetix Perps", "Kwenta Trading", "Lyra Options", "Dopex Options",
+    "Ribbon Finance", "Yearn Vaults", "Beefy Finance", "Harvest Finance"
   ];
 
-  // Add more fake airdrops to reach 10
-  const additionalAirdrops = [
-    "arbitrum-odyssey", "optimism-superchain", "polygon-zkvm", "base-onchain-summer",
-    "blast-big-bang", "scroll-sessions", "linea-voyage", "mantle-journey"
-  ].map((slug, index) => ({
-    ...fakeAirdrops[0], // Use first as template
-    slug,
-    name: slug.split('-').map(word => word.charAt(0).toUpperCase() + word.slice(1)).join(' '),
-    timeline: {
-      ...fakeAirdrops[0].timeline,
-      rumor_window_start: new Date(Date.now() + index * 24 * 60 * 60 * 1000).toISOString()
-    },
-    sources: {
-      twitter_threads: [{
-        handle: `@${slug.split('-')[0]}`,
-        url: `https://twitter.com/${slug.split('-')[0]}/status/${1750000000000 + index}`,
-        tweet_id: `${1750000000000 + index}`,
-        posted_at: new Date(Date.now() + index * 60 * 60 * 1000).toISOString()
-      }],
-      evidence_level: ["rumor", "strong", "confirmed"][index % 3] as any
-    }
-  }));
-
-  const allFakeAirdrops = [...fakeAirdrops, ...additionalAirdrops];
-
-  // Insert fake airdrops into database
-  for (const airdrop of allFakeAirdrops) {
-    await AirdropModel.findOneAndUpdate(
-      { slug: airdrop.slug },
-      airdrop,
-      { upsert: true, new: true, setDefaultsOnInsert: true }
-    );
-  }
+  const evidenceLevels = ["rumor", "strong", "confirmed"];
   
-  console.log(`Generated ${allFakeAirdrops.length} fake airdrops`);
+  const avatarUrls = [
+    "https://images.unsplash.com/photo-1614680376573-df3480f0c6ff?w=150&h=150&fit=crop&crop=faces",
+    "https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?w=150&h=150&fit=crop&crop=faces", 
+    "https://images.unsplash.com/photo-1527980965255-d3b416303d12?w=150&h=150&fit=crop&crop=faces",
+    "https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=150&h=150&fit=crop&crop=faces",
+    "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=150&h=150&fit=crop&crop=faces",
+    "https://images.unsplash.com/photo-1494790108755-2616b612b977?w=150&h=150&fit=crop&crop=faces",
+    "https://images.unsplash.com/photo-1639149888905-fb39731f2e6c?w=150&h=150&fit=crop&crop=faces"
+  ];
+
+  const projectImages = [
+    "https://images.unsplash.com/photo-1639762681485-074b7f938ba0?w=400&h=300&fit=crop",
+    "https://images.unsplash.com/photo-1642104704074-907c0698cbd9?w=400&h=300&fit=crop",
+    "https://images.unsplash.com/photo-1518546305927-5a555bb7020d?w=400&h=300&fit=crop",
+    "https://images.unsplash.com/photo-1644361567881-4d6cfe59805b?w=400&h=300&fit=crop",
+    "https://images.unsplash.com/photo-1640340434855-6084b1f4901c?w=400&h=300&fit=crop"
+  ];
+
+  const randomAirdrops = [];
+  
+  for (let i = 0; i < count; i++) {
+    const randomProject = projectNames[Math.floor(Math.random() * projectNames.length)];
+    const randomCategory = categories[Math.floor(Math.random() * categories.length)];
+    const randomChain = chains[Math.floor(Math.random() * chains.length)];
+    const randomEvidence = evidenceLevels[Math.floor(Math.random() * evidenceLevels.length)];
+    const randomAvatar = avatarUrls[Math.floor(Math.random() * avatarUrls.length)];
+    const randomImage = Math.random() > 0.3 ? projectImages[Math.floor(Math.random() * projectImages.length)] : null;
+    
+    const slug = randomProject.toLowerCase().replace(/\s+/g, '-') + '-' + Date.now() + i;
+    
+    randomAirdrops.push({
+      _id: new Date().getTime() + i,
+      slug,
+      name: randomProject,
+      category: randomCategory,
+      primary_chain: randomChain,
+      chains: [randomChain, ...chains.filter(c => c !== randomChain).slice(0, Math.floor(Math.random() * 3))],
+      avatar_url: randomAvatar,
+      image_url: randomImage,
+      timeline: {
+        rumor_window_start: new Date(Date.now() - Math.random() * 30 * 24 * 60 * 60 * 1000).toISOString(),
+        rumor_window_end: new Date(Date.now() + Math.random() * 180 * 24 * 60 * 60 * 1000).toISOString(),
+        snapshot_hint: "Activity snapshot in progress",
+        expected_claim_window: {
+          start: new Date(Date.now() + Math.random() * 90 * 24 * 60 * 60 * 1000).toISOString(),
+          end: new Date(Date.now() + Math.random() * 365 * 24 * 60 * 60 * 1000).toISOString()
+        }
+      },
+      links: {
+        website: `https://${slug.split('-')[0]}.io`,
+        docs: `https://docs.${slug.split('-')[0]}.io`,
+        app: `https://app.${slug.split('-')[0]}.io`
+      },
+      sources: {
+        twitter_threads: [
+          {
+            handle: `@${slug.split('-')[0]}`,
+            url: `https://twitter.com/${slug.split('-')[0]}/status/${1750000000000 + i}`,
+            tweet_id: `${1750000000000 + i}`,
+            posted_at: new Date(Date.now() - Math.random() * 7 * 24 * 60 * 60 * 1000).toISOString()
+          }
+        ],
+        evidence_level: randomEvidence
+      },
+      requirements: {
+        onchain: {
+          chains: [randomChain],
+          min_transactions: Math.floor(Math.random() * 20) + 5,
+          required_tx_types: ["bridge", "swap", "mint", "stake"].slice(0, Math.floor(Math.random() * 3) + 1),
+          bridge_activity: {
+            required: Math.random() > 0.5,
+            min_value_usd: Math.floor(Math.random() * 500) + 100,
+            from_chains: ["Ethereum"],
+            to_chains: [randomChain]
+          },
+          swap_volume_usd_min: Math.floor(Math.random() * 1000) + 200,
+          nft_holdings: [],
+          staking: []
+        },
+        offchain: {
+          twitter_follow: [`@${slug.split('-')[0]}`],
+          discord_join: [`${randomProject} Discord`],
+          quests: [
+            {
+              title: `Complete ${randomProject} Tutorial`,
+              platform: randomProject,
+              url: `https://tutorial.${slug.split('-')[0]}.io`,
+              points: Math.floor(Math.random() * 200) + 50
+            }
+          ],
+          kyc_required: Math.random() > 0.7
+        }
+      },
+      allocation: {
+        token_ticker: randomProject.split(' ')[0].toUpperCase().slice(0, 4),
+        total_pool_tokens: Math.floor(Math.random() * 1000000000) + 100000000,
+        vesting: {
+          cliff_days: Math.floor(Math.random() * 90),
+          vesting_months: Math.floor(Math.random() * 24) + 6
+        },
+        formula: "Activity-based allocation with bonus multipliers",
+        weights: {
+          onchain_activity: 0.6 + Math.random() * 0.2,
+          social: 0.1 + Math.random() * 0.1,
+          loyalty_time: 0.1 + Math.random() * 0.1,
+          bonus_nft: 0.05 + Math.random() * 0.05
+        }
+      },
+      estimates: {
+        expected_value_usd_range: [
+          Math.floor(Math.random() * 500) + 100, 
+          Math.floor(Math.random() * 2000) + 800
+        ],
+        probability: randomEvidence === "confirmed" ? "high" : randomEvidence === "strong" ? "medium" : "low",
+        notes: "Based on current market conditions and project fundamentals"
+      },
+      gas_breakdown: [
+        {
+          chain: randomChain,
+          action: "Bridge/Swap Activity",
+          est_gas_native: Math.random() * 0.02 + 0.005,
+          est_gas_usd: Math.floor(Math.random() * 50) + 10
+        }
+      ],
+      tweet_content: `🚀 ${randomProject} airdrop rumors heating up! Requirements include ${Math.floor(Math.random() * 20) + 5} transactions on ${randomChain}. Estimated value: $${Math.floor(Math.random() * 1000) + 200}-$${Math.floor(Math.random() * 2000) + 800}. Evidence level: ${randomEvidence} 📈 #${randomProject.replace(/\s+/g, '')} #Airdrop #${randomCategory.replace(/\s+/g, '')}`,
+      username: `@${slug.split('-')[0]}official`,
+      user_display_name: `${randomProject} Official`,
+      created_at: new Date(Date.now() - Math.random() * 24 * 60 * 60 * 1000).toISOString(),
+      ai_synthesized_demo: true
+    });
+  }
+
+  return randomAirdrops;
 }
