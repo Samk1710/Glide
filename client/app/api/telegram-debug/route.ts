@@ -4,6 +4,26 @@ import telegramClientService from '@/lib/telegram-client';
 export async function GET(request: NextRequest) {
   const { searchParams } = new URL(request.url);
   const phoneNumber = searchParams.get('phone');
+  const action = searchParams.get('action');
+
+  // If action is 'status', return the Telegram connection status
+  if (action === 'status') {
+    try {
+      const status = await telegramClientService.getConnectionStatus();
+      return NextResponse.json({
+        success: true,
+        isConnected: status.isConnected,
+        userInfo: status.userInfo,
+        error: status.error,
+      });
+    } catch (error) {
+      return NextResponse.json({
+        success: false,
+        isConnected: false,
+        error: 'Failed to get status',
+      });
+    }
+  }
 
   if (!phoneNumber) {
     return NextResponse.json(
