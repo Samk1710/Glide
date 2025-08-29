@@ -24,8 +24,10 @@ export default function Home() {
       {/* Header */}
       <Header />
 
-      {/* Hero Section */}
-      <HeroSection onLearnMore={scrollToAbout} />
+      {/* Hero Section with proper top padding to account for sticky navbar */}
+      <div className="pt-20">
+        <HeroSection onLearnMore={scrollToAbout} />
+      </div>
 
       {/* About Section */}
       <div ref={aboutRef}>

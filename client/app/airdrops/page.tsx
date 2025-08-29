@@ -201,7 +201,7 @@ export default function AirdropsPage() {
       <Header />
 
       {/* Main Content */}
-      <div className="pt-24 px-6 max-w-7xl mx-auto pb-12">
+      <div className="pt-28 px-6 max-w-7xl mx-auto pb-12">
         <div className="grid grid-cols-1 lg:grid-cols-4 gap-6">
           {/* Main Feed - Takes 3 columns */}
           <div className="lg:col-span-3 space-y-6">

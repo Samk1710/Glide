@@ -273,7 +273,7 @@ export default function TelegramPage() {
       <Background color="blue" />
       <Header />
 
-      <div className="relative z-20 min-h-screen pt-24 px-6">
+      <div className="relative z-20 min-h-screen pt-28 px-6">
         <div className="max-w-7xl mx-auto">
           {/* Page Header */}
           <div className="mb-8 flex items-center justify-between">

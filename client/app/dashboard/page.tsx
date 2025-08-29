@@ -29,7 +29,7 @@ export default function DashboardPage() {
       <Header />
 
       {/* Dashboard Content */}
-      <div className="relative z-20 min-h-screen pt-24 px-6">
+      <div className="relative z-20 min-h-screen pt-28 px-6">
         <div className="max-w-7xl mx-auto">
           {/* Dashboard Header */}
           <div className="mb-8">
