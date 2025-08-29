@@ -3,6 +3,7 @@
 import { Button } from "@/components/ui/button";
 import { ConnectButton } from '@rainbow-me/rainbowkit';
 import { signIn, signOut, useSession } from "next-auth/react";
+import Link from "next/link";
 import LightRays from "./LightRays";
 
 interface HeroSectionProps {
@@ -88,6 +89,14 @@ export default function HeroSection({ onLearnMore }: HeroSectionProps) {
               ✓ Connected as @{(session.user as any)?.username || session.user?.name}
             </Button>
           )}
+          <Link href="/onboarding">
+            <Button
+              size="lg"
+              className="bg-red-600 hover:bg-red-700 text-white px-8 py-4 text-lg font-semibold rounded-lg cursor-pointer"
+            >
+              Setup Agent
+            </Button>
+          </Link>
           
           {/* Wallet Connect Button - Secondary */}
           <ConnectButton.Custom>
