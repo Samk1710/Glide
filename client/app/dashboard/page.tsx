@@ -10,10 +10,14 @@ export default function DashboardPage() {
     <div className="min-h-screen bg-black relative">
       <Background />
       <Header />
-      
+
       <main className="relative z-10 pt-24 px-6">
-        <div className="max-w-7xl mx-auto">
-          <AgentDashboard />
+
+        {/* Dashboard Content */}
+        <div className="relative z-20 min-h-screen pt-28 px-6">
+          <div className="max-w-7xl mx-auto">
+            <AgentDashboard />
+          </div>
         </div>
       </main>
     </div>

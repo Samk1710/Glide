@@ -28,11 +28,40 @@ interface Airdrop {
   estimatedValue: string
   projectTwitter: string
   website: string
+  // Diversified fields
+  tweet_content?: string
+  user_display_name?: string
+  username?: string
+  created_at?: string
+  engagement?: {
+    likes: number
+    retweets: number
+    replies: number
+    bookmarks?: number
+    views?: number
+  }
+  avatar_url?: string
+  requirements_display?: string[]
+  visual_style?: {
+    theme: string
+    verified: boolean
+    hasMedia: boolean
+    cardStyle: string
+    textLength: string
+  }
 }
 
-// Mock tweet data for MagicTweet components
-const createTweetData = (airdrop: Airdrop) => {
-  const tweetText = `🚀 ${airdrop.title}\n\n${airdrop.description}\n\n💰 Reward: ${airdrop.reward}\n⏰ Deadline: ${airdrop.deadline}\n🔗 Chain: ${airdrop.chain}\n\n#Airdrop #Crypto #${airdrop.chain}`;
+// Mock tweet data for MagicTweet components - enhanced with diversification
+const createTweetData = (airdrop: Airdrop & any) => {
+  // Use the diversified tweet content from the API
+  const tweetText = airdrop.tweet_content || `🚀 ${airdrop.title}\n\n${airdrop.description}\n\n💰 Reward: ${airdrop.reward}\n⏰ Deadline: ${airdrop.deadline}\n🔗 Chain: ${airdrop.chain}\n\n#Airdrop #Crypto #${airdrop.chain}`;
+  
+  // Use diversified engagement metrics
+  const engagement = airdrop.engagement || {
+    likes: Math.floor(Math.random() * 5000) + 100,
+    retweets: Math.floor(Math.random() * 1000) + 50,
+    replies: Math.floor(Math.random() * 300) + 10
+  };
   
   return {
     __typename: "Tweet" as const,
@@ -43,58 +72,72 @@ const createTweetData = (airdrop: Airdrop) => {
       __typename: "User" as const,
       id: airdrop.id,
       id_str: airdrop.id,
-      name: airdrop.title,
-      screen_name: airdrop.projectTwitter.replace('@', ''),
-      profile_image_url_https: airdrop.image || `https://api.dicebear.com/7.x/shapes/svg?seed=${airdrop.id}`,
-      verified: Math.random() > 0.5,
+      name: airdrop.user_display_name || airdrop.title,
+      screen_name: (airdrop.username || airdrop.projectTwitter).replace('@', ''),
+      profile_image_url_https: airdrop.avatar_url || `https://api.dicebear.com/7.x/shapes/svg?seed=${airdrop.id}`,
+      verified: airdrop.visual_style?.verified ?? Math.random() > 0.5,
       verified_type: Math.random() > 0.5 ? "blue" : undefined,
-      followers_count: Math.floor(Math.random() * 100000),
-      following_count: Math.floor(Math.random() * 1000),
+      followers_count: Math.floor(Math.random() * 100000) + 1000,
+      following_count: Math.floor(Math.random() * 1000) + 100,
       profile_banner_url: undefined,
-      description: `Official ${airdrop.title} account`,
+      description: `${airdrop.title} - ${airdrop.category} protocol on ${airdrop.chain}`,
       location: undefined,
       url: airdrop.website,
       protected: false
     },
-    created_at: new Date(Date.now() - Math.random() * 86400000 * 7).toISOString(),
-    favorite_count: Math.floor(Math.random() * 5000),
-    retweet_count: Math.floor(Math.random() * 1000),
-    reply_count: Math.floor(Math.random() * 200),
-    quote_count: Math.floor(Math.random() * 100),
-    conversation_count: Math.floor(Math.random() * 300),
+    created_at: airdrop.created_at || new Date(Date.now() - Math.random() * 86400000 * 7).toISOString(),
+    favorite_count: engagement.likes,
+    retweet_count: engagement.retweets,
+    reply_count: engagement.replies,
+    quote_count: Math.floor(engagement.retweets * 0.3),
+    conversation_count: engagement.replies + Math.floor(engagement.replies * 0.5),
     news_action_type: "conversation" as const,
-    isEdited: false,
+    isEdited: Math.random() > 0.9,
     isStaleEdit: false,
     editable_until_msecs: undefined,
     edits_remaining: undefined,
     is_translatable: false,
     views: {
-      count: Math.floor(Math.random() * 50000).toString(),
+      count: (engagement.views || Math.floor(Math.random() * 50000) + 5000).toString(),
       state: "Enabled" as const
     },
     bookmarks: {
-      count: Math.floor(Math.random() * 500)
+      count: engagement.bookmarks || Math.floor(Math.random() * 500) + 20
     },
     retweeted: false,
-    favorited: false,
+    favorited: Math.random() > 0.8,
     full_text: tweetText,
     display_text_range: [0, tweetText.length] as [number, number],
     entities: {
-      hashtags: [
-        { indices: [0, 8] as [number, number], text: "Airdrop" },
-        { indices: [9, 16] as [number, number], text: "Crypto" },
-        { indices: [17, 17 + airdrop.chain.length] as [number, number], text: airdrop.chain }
-      ],
+      hashtags: extractHashtags(tweetText),
       urls: airdrop.website ? [{ 
         indices: [0, 23] as [number, number], 
         url: airdrop.website, 
         display_url: new URL(airdrop.website).hostname,
         expanded_url: airdrop.website 
       }] : [],
-      user_mentions: [],
+      user_mentions: extractMentions(tweetText),
       symbols: []
     },
-    extended_entities: undefined,
+    extended_entities: airdrop.visual_style?.hasMedia ? {
+      media: [{
+        id: airdrop.id,
+        id_str: airdrop.id,
+        url: airdrop.image || `https://images.unsplash.com/photo-1639762681485-074b7f938ba0?w=400&h=300&fit=crop`,
+        display_url: "pic.twitter.com/example",
+        expanded_url: airdrop.image || `https://images.unsplash.com/photo-1639762681485-074b7f938ba0?w=400&h=300&fit=crop`,
+        type: "photo",
+        indices: [0, 23] as [number, number],
+        media_url: airdrop.image || `https://images.unsplash.com/photo-1639762681485-074b7f938ba0?w=400&h=300&fit=crop`,
+        media_url_https: airdrop.image || `https://images.unsplash.com/photo-1639762681485-074b7f938ba0?w=400&h=300&fit=crop`,
+        sizes: {
+          medium: { w: 400, h: 300, resize: "fit" },
+          small: { w: 200, h: 150, resize: "fit" },
+          thumb: { w: 150, h: 150, resize: "crop" },
+          large: { w: 800, h: 600, resize: "fit" }
+        }
+      }]
+    } : undefined,
     possibly_sensitive: false,
     lang: "en",
     edit_control: {
@@ -104,6 +147,37 @@ const createTweetData = (airdrop: Airdrop) => {
       edits_remaining: 0
     }
   } as any; // Type assertion to avoid complex type issues
+}
+
+// Helper function to extract hashtags from tweet text
+function extractHashtags(text: string) {
+  const hashtagRegex = /#(\w+)/g;
+  const hashtags = [];
+  let match;
+  while ((match = hashtagRegex.exec(text)) !== null) {
+    hashtags.push({
+      indices: [match.index, match.index + match[0].length] as [number, number],
+      text: match[1]
+    });
+  }
+  return hashtags;
+}
+
+// Helper function to extract mentions from tweet text
+function extractMentions(text: string) {
+  const mentionRegex = /@(\w+)/g;
+  const mentions = [];
+  let match;
+  while ((match = mentionRegex.exec(text)) !== null) {
+    mentions.push({
+      indices: [match.index, match.index + match[0].length] as [number, number],
+      screen_name: match[1],
+      name: match[1],
+      id: Math.random().toString(),
+      id_str: Math.random().toString()
+    });
+  }
+  return mentions;
 }
 
 export default function AirdropsPage() {
@@ -135,7 +209,7 @@ export default function AirdropsPage() {
   const fetchAirdrops = async () => {
     setLoading(true)
     try {
-      const response = await fetch('/api/airdrops')
+      const response = await fetch('/api/airdrops/diversify')
       const data = await response.json()
       console.log('API Response:', data)
       
@@ -161,7 +235,16 @@ export default function AirdropsPage() {
           participants: Math.floor(Math.random() * 50000) + 10000,
           estimatedValue: `$${item.estimates?.expected_value_usd_range?.[0] || 200}-$${item.estimates?.expected_value_usd_range?.[1] || 800}`,
           projectTwitter: item.username || `@${item.slug?.split('-')[0] || 'project'}`,
-          website: item.links?.website || '#'
+          website: item.links?.website || '#',
+          // Diversified fields
+          tweet_content: item.tweet_content,
+          user_display_name: item.user_display_name,
+          username: item.username,
+          created_at: item.created_at,
+          engagement: item.engagement,
+          avatar_url: item.avatar_url,
+          requirements_display: item.requirements_display,
+          visual_style: item.visual_style
         }))
         
         setAirdrops(mappedAirdrops)
@@ -201,7 +284,7 @@ export default function AirdropsPage() {
       <Header />
 
       {/* Main Content */}
-      <div className="pt-24 px-6 max-w-7xl mx-auto pb-12">
+      <div className="pt-28 px-6 max-w-7xl mx-auto pb-12">
         <div className="grid grid-cols-1 lg:grid-cols-4 gap-6">
           {/* Main Feed - Takes 3 columns */}
           <div className="lg:col-span-3 space-y-6">
@@ -313,59 +396,137 @@ export default function AirdropsPage() {
                     transition={{ delay: index * 0.1 }}
                     className="group mb-8"
                   >
-                    {/* Tweet Card Container with red theme */}
-                    <div className="bg-gradient-to-br from-red-950/40 to-red-900/30 backdrop-blur-sm rounded-2xl border border-red-500/30 hover:border-red-400/50 transition-all duration-300 overflow-hidden shadow-2xl">
-                      <div className="bg-gradient-to-br from-gray-900/95 to-gray-800/95 rounded-xl border border-red-500/20 m-2">
+                    {/* Tweet Card Container with dynamic theme */}
+                    <div className={`bg-gradient-to-br backdrop-blur-sm rounded-2xl border hover:border-opacity-70 transition-all duration-300 overflow-hidden shadow-2xl ${
+                      airdrop.visual_style?.theme === 'blue' ? 'from-blue-950/40 to-blue-900/30 border-blue-500/30 hover:border-blue-400/50' :
+                      airdrop.visual_style?.theme === 'purple' ? 'from-purple-950/40 to-purple-900/30 border-purple-500/30 hover:border-purple-400/50' :
+                      airdrop.visual_style?.theme === 'green' ? 'from-green-950/40 to-green-900/30 border-green-500/30 hover:border-green-400/50' :
+                      airdrop.visual_style?.theme === 'orange' ? 'from-orange-950/40 to-orange-900/30 border-orange-500/30 hover:border-orange-400/50' :
+                      'from-red-950/40 to-red-900/30 border-red-500/30 hover:border-red-400/50'
+                    }`}>
+                      <div className={`bg-gradient-to-br from-gray-900/95 to-gray-800/95 rounded-xl border m-2 ${
+                        airdrop.visual_style?.theme === 'blue' ? 'border-blue-500/20' :
+                        airdrop.visual_style?.theme === 'purple' ? 'border-purple-500/20' :
+                        airdrop.visual_style?.theme === 'green' ? 'border-green-500/20' :
+                        airdrop.visual_style?.theme === 'orange' ? 'border-orange-500/20' :
+                        'border-red-500/20'
+                      }`}>
                         {/* MagicTweet Component */}
                         <div className="overflow-hidden rounded-xl">
                           <MagicTweet 
                             tweet={createTweetData(airdrop)}
-                            className="!bg-gradient-to-br !from-gray-900/90 !to-gray-800/90 !border-red-500/20 !backdrop-blur-sm max-w-none w-full"
+                            className={`!bg-gradient-to-br !from-gray-900/90 !to-gray-800/90 !backdrop-blur-sm max-w-none w-full ${
+                              airdrop.visual_style?.theme === 'blue' ? '!border-blue-500/20' :
+                              airdrop.visual_style?.theme === 'purple' ? '!border-purple-500/20' :
+                              airdrop.visual_style?.theme === 'green' ? '!border-green-500/20' :
+                              airdrop.visual_style?.theme === 'orange' ? '!border-orange-500/20' :
+                              '!border-red-500/20'
+                            }`}
                           />
                         </div>
                         
                         {/* Additional Airdrop Info Overlay */}
-                        <div className="px-6 pb-6 border-t border-red-500/10 bg-gradient-to-r from-red-950/30 to-orange-950/20">
+                        <div className={`px-6 pb-6 border-t bg-gradient-to-r ${
+                          airdrop.visual_style?.theme === 'blue' ? 'border-blue-500/10 from-blue-950/30 to-blue-800/20' :
+                          airdrop.visual_style?.theme === 'purple' ? 'border-purple-500/10 from-purple-950/30 to-purple-800/20' :
+                          airdrop.visual_style?.theme === 'green' ? 'border-green-500/10 from-green-950/30 to-green-800/20' :
+                          airdrop.visual_style?.theme === 'orange' ? 'border-orange-500/10 from-orange-950/30 to-orange-800/20' :
+                          'border-red-500/10 from-red-950/30 to-orange-950/20'
+                        }`}>
                           <div className="grid grid-cols-1 md:grid-cols-2 gap-6 pt-4">
                             <div>
-                              <h4 className="text-red-400 font-semibold mb-3 text-sm flex items-center gap-2">
-                                <span className="w-2 h-2 bg-red-400 rounded-full"></span>
+                              <h4 className={`font-semibold mb-3 text-sm flex items-center gap-2 ${
+                                airdrop.visual_style?.theme === 'blue' ? 'text-blue-400' :
+                                airdrop.visual_style?.theme === 'purple' ? 'text-purple-400' :
+                                airdrop.visual_style?.theme === 'green' ? 'text-green-400' :
+                                airdrop.visual_style?.theme === 'orange' ? 'text-orange-400' :
+                                'text-red-400'
+                              }`}>
+                                <span className={`w-2 h-2 rounded-full ${
+                                  airdrop.visual_style?.theme === 'blue' ? 'bg-blue-400' :
+                                  airdrop.visual_style?.theme === 'purple' ? 'bg-purple-400' :
+                                  airdrop.visual_style?.theme === 'green' ? 'bg-green-400' :
+                                  airdrop.visual_style?.theme === 'orange' ? 'bg-orange-400' :
+                                  'bg-red-400'
+                                }`}></span>
                                 Requirements:
                               </h4>
                               <ul className="space-y-2">
-                                {airdrop.requirements.slice(0, 4).map((req, idx) => (
+                                {(airdrop.requirements_display || airdrop.requirements).slice(0, 4).map((req: string, idx: number) => (
                                   <li key={idx} className="text-white/80 text-sm flex items-start gap-3">
-                                    <div className="w-1.5 h-1.5 bg-red-400 rounded-full mt-1.5 flex-shrink-0" />
+                                    <div className={`w-1.5 h-1.5 rounded-full mt-1.5 flex-shrink-0 ${
+                                      airdrop.visual_style?.theme === 'blue' ? 'bg-blue-400' :
+                                      airdrop.visual_style?.theme === 'purple' ? 'bg-purple-400' :
+                                      airdrop.visual_style?.theme === 'green' ? 'bg-green-400' :
+                                      airdrop.visual_style?.theme === 'orange' ? 'bg-orange-400' :
+                                      'bg-red-400'
+                                    }`} />
                                     <span>{req}</span>
                                   </li>
                                 ))}
-                                {airdrop.requirements.length > 4 && (
-                                  <li className="text-red-400 text-xs ml-4 opacity-70">+{airdrop.requirements.length - 4} more requirements</li>
+                                {(airdrop.requirements_display || airdrop.requirements).length > 4 && (
+                                  <li className={`text-xs ml-4 opacity-70 ${
+                                    airdrop.visual_style?.theme === 'blue' ? 'text-blue-400' :
+                                    airdrop.visual_style?.theme === 'purple' ? 'text-purple-400' :
+                                    airdrop.visual_style?.theme === 'green' ? 'text-green-400' :
+                                    airdrop.visual_style?.theme === 'orange' ? 'text-orange-400' :
+                                    'text-red-400'
+                                  }`}>+{(airdrop.requirements_display || airdrop.requirements).length - 4} more requirements</li>
                                 )}
                               </ul>
                             </div>
                             
                             <div className="space-y-3">
-                              <div className="flex justify-between items-center p-3 bg-white/5 rounded-lg border border-red-500/20">
+                              <div className={`flex justify-between items-center p-3 bg-white/5 rounded-lg border ${
+                                airdrop.visual_style?.theme === 'blue' ? 'border-blue-500/20' :
+                                airdrop.visual_style?.theme === 'purple' ? 'border-purple-500/20' :
+                                airdrop.visual_style?.theme === 'green' ? 'border-green-500/20' :
+                                airdrop.visual_style?.theme === 'orange' ? 'border-orange-500/20' :
+                                'border-red-500/20'
+                              }`}>
                                 <span className="text-white/70 text-sm">💰 Reward:</span>
                                 <span className="text-orange-400 font-bold text-sm">{airdrop.reward}</span>
                               </div>
-                              <div className="flex justify-between items-center p-3 bg-white/5 rounded-lg border border-red-500/20">
+                              <div className={`flex justify-between items-center p-3 bg-white/5 rounded-lg border ${
+                                airdrop.visual_style?.theme === 'blue' ? 'border-blue-500/20' :
+                                airdrop.visual_style?.theme === 'purple' ? 'border-purple-500/20' :
+                                airdrop.visual_style?.theme === 'green' ? 'border-green-500/20' :
+                                airdrop.visual_style?.theme === 'orange' ? 'border-orange-500/20' :
+                                'border-red-500/20'
+                              }`}>
                                 <span className="text-white/70 text-sm">⏰ Deadline:</span>
                                 <span className="text-white font-medium text-sm">{airdrop.deadline}</span>
                               </div>
-                              <div className="flex justify-between items-center p-3 bg-white/5 rounded-lg border border-red-500/20">
+                              <div className={`flex justify-between items-center p-3 bg-white/5 rounded-lg border ${
+                                airdrop.visual_style?.theme === 'blue' ? 'border-blue-500/20' :
+                                airdrop.visual_style?.theme === 'purple' ? 'border-purple-500/20' :
+                                airdrop.visual_style?.theme === 'green' ? 'border-green-500/20' :
+                                airdrop.visual_style?.theme === 'orange' ? 'border-orange-500/20' :
+                                'border-red-500/20'
+                              }`}>
                                 <span className="text-white/70 text-sm">💎 Est. Value:</span>
                                 <span className="text-green-400 font-bold text-sm">{airdrop.estimatedValue}</span>
                               </div>
-                              <div className="flex justify-between items-center p-3 bg-white/5 rounded-lg border border-red-500/20">
+                              <div className={`flex justify-between items-center p-3 bg-white/5 rounded-lg border ${
+                                airdrop.visual_style?.theme === 'blue' ? 'border-blue-500/20' :
+                                airdrop.visual_style?.theme === 'purple' ? 'border-purple-500/20' :
+                                airdrop.visual_style?.theme === 'green' ? 'border-green-500/20' :
+                                airdrop.visual_style?.theme === 'orange' ? 'border-orange-500/20' :
+                                'border-red-500/20'
+                              }`}>
                                 <span className="text-white/70 text-sm">👥 Participants:</span>
                                 <span className="text-blue-400 font-medium text-sm">{airdrop.participants.toLocaleString()}</span>
                               </div>
                               
                               <div className="flex items-center justify-between gap-2 pt-2">
                                 <div className="flex gap-2">
-                                  <Badge variant="outline" className="border-red-500/40 text-red-400 text-xs px-2 py-1">
+                                  <Badge variant="outline" className={`text-xs px-2 py-1 ${
+                                    airdrop.visual_style?.theme === 'blue' ? 'border-blue-500/40 text-blue-400' :
+                                    airdrop.visual_style?.theme === 'purple' ? 'border-purple-500/40 text-purple-400' :
+                                    airdrop.visual_style?.theme === 'green' ? 'border-green-500/40 text-green-400' :
+                                    airdrop.visual_style?.theme === 'orange' ? 'border-orange-500/40 text-orange-400' :
+                                    'border-red-500/40 text-red-400'
+                                  }`}>
                                     🔗 {airdrop.chain}
                                   </Badge>
                                   <Badge 
