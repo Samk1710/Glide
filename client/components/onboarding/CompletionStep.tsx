@@ -5,6 +5,8 @@ import { useRouter } from 'next/navigation';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { CheckCircle, Wallet, MessageSquare, Shield, ArrowRight, Star } from 'lucide-react';
+import { useUserProfile } from '@/hooks/useUserProfile';
+import { toast } from 'sonner';
 
 interface CompletionStepProps {
   data: any;
@@ -14,11 +16,33 @@ interface CompletionStepProps {
 
 export default function CompletionStep({ data, updateData, onNext }: CompletionStepProps) {
   const router = useRouter();
+  const { saveOnboardingData, updateAgentPreferences } = useUserProfile();
 
-  const handleGetStarted = () => {
-    // Navigate to dashboard
-    console.log('Navigating to dashboard with data:', data);
-    router.push('/dashboard');
+  const handleGetStarted = async () => {
+    try {
+      // Save final completion step
+      await saveOnboardingData({
+        step: 4,
+        agentPreferences: {
+          autoEnrollment: false,
+          riskTolerance: 'medium' as const,
+          maxDailyTransactions: 10,
+          minimumAirdropValue: 10,
+          preferredNetworks: ['avalanche', 'ethereum', 'bsc'],
+          blacklistedTokens: [],
+          customInstructions: ''
+        }
+      });
+
+      toast.success('Onboarding completed successfully!');
+      console.log('Navigating to dashboard with data:', data);
+      router.push('/dashboard');
+    } catch (error) {
+      console.error('Error completing onboarding:', error);
+      toast.error('Failed to complete onboarding');
+      // Still navigate to dashboard
+      router.push('/dashboard');
+    }
   };
 
   const getSetupSummary = () => {
