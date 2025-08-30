@@ -1,0 +1,31 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Fix User ID</title>
+</head>
+<body>
+    <h1>Set User ID</h1>
+    <button onclick="setUserIdAndRedirect()">Set User ID and Go to Dashboard</button>
+    
+    <script>
+        function setUserIdAndRedirect() {
+            // Set the correct user ID in localStorage
+            localStorage.setItem('glide_user_id', 'user_1756591193895_6hdtkcyal');
+            
+            // Clear any other user-related localStorage items that might conflict
+            Object.keys(localStorage).forEach(key => {
+                if (key.startsWith('glide_user_') && key !== 'glide_user_id') {
+                    localStorage.removeItem(key);
+                }
+            });
+            
+            alert('User ID set! Redirecting to dashboard...');
+            
+            // Redirect to dashboard
+            window.location.href = '/dashboard';
+        }
+    </script>
+</body>
+</html>

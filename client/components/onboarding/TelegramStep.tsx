@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { useRouter } from 'next/navigation';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -9,6 +9,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { MessageSquare, Phone, Shield, Check, X, Plus, Trash2, AlertTriangle, Users, Hash } from 'lucide-react';
 import { toast } from 'sonner';
 import { useTelegramAuth } from '@/contexts/TelegramAuthContext';
+import { useUserProfile } from '@/hooks/useUserProfile';
 
 interface TelegramStepProps {
   data: any;
@@ -19,6 +20,8 @@ interface TelegramStepProps {
 export default function TelegramStep({ data, updateData, onNext }: TelegramStepProps) {
   const router = useRouter();
   const { user, session, isAuthenticated, login } = useTelegramAuth();
+  const { profile, saveOnboardingData, updateTelegramSession, updateSelectedChannels } = useUserProfile();
+  
   const [phoneNumber, setPhoneNumber] = useState(data.telegram?.phoneNumber || '');
   const [otpCode, setOtpCode] = useState('');
   const [isOtpSent, setIsOtpSent] = useState(false);
@@ -27,9 +30,33 @@ export default function TelegramStep({ data, updateData, onNext }: TelegramStepP
   const [newChatRoom, setNewChatRoom] = useState('');
   const [isConnecting, setIsConnecting] = useState(false);
   const [userSession, setUserSession] = useState(data.telegram?.session || session);
-  const [availableChatRooms, setAvailableChatRooms] = useState([]);
+  const [availableChatRooms, setAvailableChatRooms] = useState<any[]>([]);
   const [phoneCodeHash, setPhoneCodeHash] = useState('');
   const [userInfo, setUserInfo] = useState<any>(data.telegram?.userInfo || user);
+
+  // Use ref to track if restoration has already happened
+  const hasRestoredFromProfileRef = useRef(false);
+
+  // Load saved data from user profile - only once
+  useEffect(() => {
+    if (profile?.telegramPreferences?.isConnected && !hasRestoredFromProfileRef.current) {
+      setIsVerified(true);
+      setPhoneNumber(profile.telegramPreferences.phoneNumber || '');
+      setUserSession(profile.telegramPreferences.sessionString || '');
+      
+      if (profile.telegramPreferences.selectedChannels) {
+        setAvailableChatRooms(profile.telegramPreferences.selectedChannels);
+        setSelectedChatRooms(
+          profile.telegramPreferences.selectedChannels
+            .filter((channel: any) => channel.isSelected)
+            .map((channel: any) => channel.chatId)
+        );
+      }
+      
+      hasRestoredFromProfileRef.current = true;
+      toast.success('Telegram preferences restored from profile');
+    }
+  }, [profile?.telegramPreferences?.isConnected]); // Only depend on key restoration condition
 
   // Auto-redirect if already authenticated
   useEffect(() => {
@@ -40,7 +67,9 @@ export default function TelegramStep({ data, updateData, onNext }: TelegramStepP
       
       // If we're already authenticated, show option to go to Telegram dashboard
       toast.success(`Already logged in as ${user.first_name}! You can continue or visit the Telegram dashboard.`);
-      fetchAvailableChats(session);
+      if (session) {
+        fetchAvailableChats(session);
+      }
     }
   }, [isAuthenticated, user, session]);
 
@@ -201,7 +230,7 @@ export default function TelegramStep({ data, updateData, onNext }: TelegramStepP
     }
   };
 
-  const handleNext = () => {
+  const handleNext = async () => {
     if (!isVerified) {
       toast.warning('Please verify your phone number first');
       return;
@@ -212,15 +241,61 @@ export default function TelegramStep({ data, updateData, onNext }: TelegramStepP
       return;
     }
 
+    const telegramData = {
+      phoneNumber,
+      isVerified,
+      session: userSession,
+      selectedChatRooms,
+      userInfo
+    };
+
     updateData({
-      telegram: {
-        phoneNumber,
-        isVerified,
-        session: userSession,
-        selectedChatRooms,
-        userInfo
-      }
+      telegram: telegramData
     });
+
+    // Save telegram data to user profile
+    try {
+      const selectedChannels = availableChatRooms.map((room: any) => ({
+        chatId: room.id || room.chatId,
+        title: room.title || room.name,
+        type: room.type || 'channel',
+        memberCount: room.memberCount || room.participants_count,
+        isSelected: selectedChatRooms.some((selected: any) => 
+          (selected.id && selected.id === room.id) || 
+          (selected.chatId && selected.chatId === room.id)
+        ),
+        keywords: room.keywords || []
+      }));
+
+      // Update session in user profile
+      await updateTelegramSession(userSession, phoneNumber);
+      
+      // Update selected channels
+      await updateSelectedChannels(selectedChannels);
+
+      // Save step data
+      await saveOnboardingData({
+        step: 2,
+        telegramData: {
+          phoneNumber,
+          sessionString: userSession,
+          selectedChannels,
+          monitoringKeywords: [],
+          notificationSettings: {
+            newAirdrops: true,
+            eligibleAirdrops: true,
+            autoEnrollment: false,
+            dailySummary: true
+          }
+        }
+      });
+
+      toast.success('Telegram preferences saved successfully!');
+    } catch (error) {
+      console.error('Error saving telegram data:', error);
+      toast.error('Failed to save telegram preferences');
+    }
+
     onNext();
   };
 

@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Button } from '@/components/ui/button';
@@ -26,6 +26,8 @@ import { ConnectButton } from '@rainbow-me/rainbowkit';
 import { useAccount, useSignMessage } from 'wagmi';
 import { formatWalletAddress, isDuplicateWallet } from '@/utils/onboarding';
 import { WalletData } from '@/types/onboarding';
+import { useUserProfile } from '@/hooks/useUserProfile';
+import { toast } from 'sonner';
 
 interface ActiveWalletsStepProps {
   data: any;
@@ -40,9 +42,41 @@ export default function ActiveWalletsStep({ data, updateData, onNext }: ActiveWa
   const [copiedAddresses, setCopiedAddresses] = useState<{[key: string]: boolean}>({});
   const [isSigningMessage, setIsSigningMessage] = useState(false);
   
+  // User profile hook
+  const { profile, saveOnboardingData } = useUserProfile();
+  
   // Get connected wallet info from wagmi
   const { address: connectedAddress, isConnected, chain } = useAccount();
   const { signMessageAsync } = useSignMessage();
+
+  // Use ref to track if restoration has already happened
+  const hasRestoredFromProfileRef = useRef(false);
+
+  // Load existing wallets from profile - only once
+  useEffect(() => {
+    if (profile?.activeWallets && profile.activeWallets.length > 0 && !hasRestoredFromProfileRef.current) {
+      const savedWallets: WalletData[] = profile.activeWallets.map((wallet: any) => ({
+        id: wallet.address,
+        address: wallet.address,
+        network: wallet.network,
+        nickname: wallet.nickname || '',
+        name: wallet.nickname || 'My Wallet',
+        balance: wallet.balance || '0.00',
+        isActive: wallet.isActive !== false,
+        isVerified: true,
+        isValid: true
+      }));
+      
+      setWallets(savedWallets);
+      updateData({
+        ...data,
+        activeWallets: savedWallets
+      });
+      
+      hasRestoredFromProfileRef.current = true;
+      toast.success('Active wallets restored from profile');
+    }
+  }, [profile?.activeWallets?.length]); // Only depend on the length of active wallets
 
   const networks = [
     { id: 'ethereum', name: 'Ethereum', symbol: 'ETH' },
@@ -192,8 +226,30 @@ export default function ActiveWalletsStep({ data, updateData, onNext }: ActiveWa
     return net ? `${net.name}` : network;
   };
 
-  const handleNext = () => {
+  const handleNext = async () => {
     updateData({ activeWallets: wallets });
+    
+    // Save active wallets to user profile
+    try {
+      const activeWalletsData = wallets.map(wallet => ({
+        address: wallet.address,
+        network: wallet.network,
+        balance: wallet.balance,
+        nickname: wallet.nickname,
+        isActive: wallet.isActive
+      }));
+
+      await saveOnboardingData({
+        step: 3,
+        activeWallets: activeWalletsData
+      });
+
+      toast.success('Active wallets saved successfully!');
+    } catch (error) {
+      console.error('Error saving active wallets:', error);
+      toast.error('Failed to save active wallets');
+    }
+    
     onNext();
   };
 
